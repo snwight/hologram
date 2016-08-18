@@ -59,29 +59,26 @@ NewDirectSessionTokenService returns a credential service that talks
 to Amazon directly.
 */
 func NewDirectSessionTokenService(iamAccount string, sts *sts.STS, accountAliases *map[string]string) *directSessionTokenService {
-	return &directSessionTokenService{iamAccount: iamAccount, sts: sts, accountAliases:accountAliases}
+	return &directSessionTokenService{iamAccount: iamAccount, sts: sts, accountAliases: accountAliases}
 }
 
 func (s *directSessionTokenService) Start() error {
 	return nil
 }
 
-func (s *directSessionTokenService) buildARN(role string) string {
+func BuildARN(role string, defaultAccount string, accountAliases *map[string]string) string {
 	var arn string
 
-	split := strings.Split("/", role)
-	if len(split) == 2 && s.accountAliases != nil && s.accountAliases[split[0]] != "" {
-		arn = fmt.Sprintf("%s:role/%s", s.accountAliases[split[0]], role)
-	}
-
-	if strings.HasPrefix(role, "arn:aws:iam") {
+	split := strings.Split(role, "/")
+	if len(split) == 2 && accountAliases != nil && (*accountAliases)[split[0]] != "" {
+		arn = fmt.Sprintf("%s:role/%s", (*accountAliases)[split[0]], split[1])
+	} else if strings.HasPrefix(role, "arn:aws:iam") {
 		arn = role
 	} else if strings.Contains(role, ":role/") {
 		arn = fmt.Sprintf("arn:aws:iam::%s", role)
 	} else {
-		arn = fmt.Sprintf("arn:aws:iam::%s:role/%s", s.iamAccount, role)
+		arn = fmt.Sprintf("arn:aws:iam::%s:role/%s", defaultAccount, role)
 	}
-
 	return arn
 }
 
@@ -93,7 +90,7 @@ func (s *directSessionTokenService) AssumeRole(user *User, role string, enableLD
 	if enableLDAPRoles {
 		found := false
 		for _, a := range user.ARNs {
-			a = BuildARN(role, s.iamAccount, s.accountAliases)
+			a = BuildARN(a, s.iamAccount, s.accountAliases)
 			if arn == a {
 				found = true
 				break

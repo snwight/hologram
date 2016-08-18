@@ -49,7 +49,7 @@ type accessKeyClient struct {
 	cr          CredentialsReceiver
 }
 
-func AccessKeyClient(cr CredentialsReceiver) *accessKeyClient {
+func AccessKeyClient(cr CredentialsReceiver, accountAliases *map[string]string) *accessKeyClient {
 	config := aws.Config{}
 	sess, err := session.NewSession(&config)
 	if err != nil {
@@ -63,7 +63,7 @@ func AccessKeyClient(cr CredentialsReceiver) *accessKeyClient {
 	}
 	iamAccount := strings.Split(*iamUser.User.Arn, ":")[4]
 	iamUsername := iamUser.User.UserName
-	credentialService := server.NewDirectSessionTokenService(iamAccount, sts)
+	credentialService := server.NewDirectSessionTokenService(iamAccount, sts, accountAliases)
 	c := &accessKeyClient{
 		credentialService: credentialService,
 		iamUsername: *iamUsername,
