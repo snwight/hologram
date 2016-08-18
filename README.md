@@ -160,6 +160,8 @@ The config files can set accountAliases, a dictionary from short name to account
   }
 }```
 
+With this config, `hologram use dev/service` would be equivalent to `hologram use arn:aws:iam::123456:role/service`
+
 ### Serverless
 
 The hologram agent supports being run without a server, based on long-lived user credentials.  To use, instead of defining host in the config.json file, it uses the go sdk [default credentials provider](https://github.com/aws/aws-sdk-go/#configuring-credentials) on the hologram-agent.
