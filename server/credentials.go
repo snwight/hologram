@@ -51,15 +51,15 @@ compiled into the application.
 type directSessionTokenService struct {
 	iamAccount     string
 	sts            *sts.STS
-	accountAliases map[string]string
+	accountAliases *map[string]string
 }
 
 /*
 NewDirectSessionTokenService returns a credential service that talks
 to Amazon directly.
 */
-func NewDirectSessionTokenService(iamAccount string, sts *sts.STS) *directSessionTokenService {
-	return &directSessionTokenService{iamAccount: iamAccount, sts: sts}
+func NewDirectSessionTokenService(iamAccount string, sts *sts.STS, accountAliases *map[string]string) *directSessionTokenService {
+	return &directSessionTokenService{iamAccount: iamAccount, sts: sts, accountAliases:accountAliases}
 }
 
 func (s *directSessionTokenService) Start() error {
@@ -86,14 +86,14 @@ func (s *directSessionTokenService) buildARN(role string) string {
 }
 
 func (s *directSessionTokenService) AssumeRole(user *User, role string, enableLDAPRoles bool) (*sts.Credentials, error) {
-	var arn string = s.buildARN(role)
+	var arn string = BuildARN(role, s.iamAccount, s.accountAliases)
 
 	log.Debug("Checking ARN %s against user %s (with access %s)", arn, user.Username, enableLDAPRoles)
 
 	if enableLDAPRoles {
 		found := false
 		for _, a := range user.ARNs {
-			a = s.buildARN(a)
+			a = BuildARN(role, s.iamAccount, s.accountAliases)
 			if arn == a {
 				found = true
 				break
