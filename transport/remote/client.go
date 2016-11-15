@@ -19,6 +19,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 
+	"github.com/AdRoll/hologram/log"
 	"github.com/AdRoll/hologram/protocol"
 )
 
@@ -42,11 +43,14 @@ func NewClient(address string) (retClient protocol.MessageReadWriteCloser, err e
 		InsecureSkipVerify: true,
 	}
 
+	log.Debug("remote.NewClient calling tls.Dial with addr: %v, tlsConf: %v", address, tlsConf)
+
 	socket, err := tls.Dial("tcp", address, tlsConf)
 	if err != nil {
-		return
+		log.Errorf("tls.Dial failure in NewClient: %v", err)
+		return nil, err
 	}
 
-	retClient = protocol.NewMessageConnection(socket)
-	return
+	log.Debug("NewClient calling protocol.NewMessageConnection with sock:", socket)
+	return protocol.NewMessageConnection(socket), nil
 }

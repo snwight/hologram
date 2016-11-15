@@ -125,15 +125,22 @@ func (c *accessKeyClient) GetUserCredentials() error {
 	options := &sts.GetSessionTokenInput{
 		DurationSeconds: &durationSeconds,
 	}
+
+	log.Debug("accessKeyClient.GetUserCredentials: calling sts.GetSessionToken()")
+
 	response, err := c.sts.GetSessionToken(options)
+	if err != nil {
+		log.Errorf("accessKeyClient.GetUserCredentials: Failed to get session token: %v", err.Error())
+		return err
+	}
+
+	log.Debug("accessKeyClient.GetUserCredentials: Successfully called sts.GetSessionToken()")
+
 	creds := &sts.Credentials{
 		AccessKeyId:     response.Credentials.AccessKeyId,
 		SessionToken:    response.Credentials.SessionToken,
 		SecretAccessKey: response.Credentials.SecretAccessKey,
 		Expiration:      response.Credentials.Expiration,
-	}
-	if err != nil {
-		return err
 	}
 	c.cr.SetCredentials(creds, "")
 	return nil
@@ -165,6 +172,8 @@ func (c *client) GetUserCredentials() error {
 		GetUserCredentials: &protocol.GetUserCredentials{},
 	}
 
+	log.Debug("client.GetUserCredentials calling requestCredentials")
+
 	return c.requestCredentials(req, "")
 }
 
@@ -177,10 +186,11 @@ func (c *client) requestCredentials(req *protocol.ServerRequest, role string) er
 	msg := &protocol.Message{ServerRequest: req}
 
 	err = conn.Write(msg)
-
 	if err != nil {
 		return err
 	}
+
+	log.Debug("client.requestCredentials entering horrible for loop")
 
 	for skip := 0; ; {
 		msg, err = conn.Read()

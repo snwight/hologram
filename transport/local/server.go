@@ -18,6 +18,7 @@ import (
 	"net"
 
 	"github.com/AdRoll/hologram/protocol"
+	"github.com/AdRoll/hologram/log"
 )
 
 type server struct {
@@ -33,11 +34,18 @@ func (us *server) listen() {
 	for {
 		conn, err := us.s.Accept()
 		if err != nil {
+
+			log.Debug("listen continuing with err %v", err.Error())
+
 			continue
 		}
 
+		log.Debug("listen spawning connection")
+
 		smc := protocol.NewMessageConnection(conn)
 		go us.handler(smc)
+
+		log.Debug("listen returning")
 	}
 }
 
@@ -63,6 +71,11 @@ func NewServer(address string, handler protocol.ConnectionHandlerFunc) (retServe
 		handler: handler,
 	}
 
+	log.Debug("NewServer spawning listen()")
+
 	go retServer.listen()
+
+	log.Debug("NewServer returning")
+
 	return
 }

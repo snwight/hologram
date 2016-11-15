@@ -27,37 +27,23 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
+var (
+	useRole =	flag.String("use", "<role>", "Connect to hologram server using role.")
+	useMe =		flag.Bool("me", false, "Authorize me!")
+)
+
 func main() {
 	flag.Parse()
 
-	args := flag.Args()
+	switch {
+	case *useRole != "":
+		use(*useRole)
 
-	var err error
+	case *useMe:
+		me()
 
-	if len(args) < 1 {
-		fmt.Println("Usage: hologram <cmd>")
-		os.Exit(1)
-	}
-
-	switch args[0] {
-	case "use":
-		if len(args) < 2 {
-			fmt.Println("Usage: hologram use <role>")
-			os.Exit(1)
-		}
-		err = use(args[1])
-		break
-	case "me":
-		err = me()
-		break
 	default:
-		fmt.Println("Usage: hologram use <role>")
-		os.Exit(1)
-	}
-
-	if err != nil {
-		log.Errorf(err.Error())
-		os.Exit(1)
+		flag.PrintDefaults()
 	}
 }
 

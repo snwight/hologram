@@ -25,10 +25,11 @@ import (
 type cliHandler struct {
 	client  Client
 	address string
+	passPhrase string
 }
 
-func NewCliHandler(address string, client Client) *cliHandler {
-	return &cliHandler{client: client, address: address}
+func NewCliHandler(address string, client Client, passPhrase []byte) *cliHandler {
+	return &cliHandler{client: client, address: address, passPhrase: string(passPhrase)}
 }
 
 func (h *cliHandler) Start() error {
@@ -65,7 +66,7 @@ func (h *cliHandler) HandleConnection(c protocol.MessageReadWriteCloser) {
 				log.Debug("SSH keyfile included in this request.")
 			}
 
-			SSHSetAgentSock(sshAgentSock, sshKeyBytes)
+			SSHSetAgentSock(sshAgentSock, sshKeyBytes, h.passPhrase)
 
 			if dr.GetAssumeRole() != nil {
 				log.Debug("Handling AssumeRole request.")

@@ -42,7 +42,7 @@ func (r *dummyCredentialsReceiver) SetClient(Client) {}
 
 func TestAssumeRole(t *testing.T) {
 	fixtureSSHKey, _ := Asset("test_ssh_key")
-	SSHSetAgentSock(os.Getenv("SSH_AUTH_SOCK"), fixtureSSHKey)
+	SSHSetAgentSock(os.Getenv("SSH_AUTH_SOCK"), fixtureSSHKey, "")
 
 	Convey("AssumeRole", t, func() {
 		// TODO randomize port number
