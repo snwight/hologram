@@ -51,6 +51,6 @@ func NewClient(address string) (retClient protocol.MessageReadWriteCloser, err e
 		return nil, err
 	}
 
-	log.Debug("NewClient calling protocol.NewMessageConnection with sock:", socket)
+	log.Debug("NewClient calling protocol.NewMessageConnection with sock: %v", socket)
 	return protocol.NewMessageConnection(socket), nil
 }
