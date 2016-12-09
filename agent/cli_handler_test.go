@@ -39,7 +39,7 @@ func (c *dummyClient) GetUserCredentials() error {
 func TestCliHandler(t *testing.T) {
 	Convey("AssumeRole", t, func() {
 		ra := &dummyClient{}
-		ch := NewCliHandler("", ra)
+		ch := NewCliHandler("", ra, nil)
 
 		conn := testConnection(ch.HandleConnection)
 

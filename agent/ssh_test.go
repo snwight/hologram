@@ -37,7 +37,7 @@ func TestSSH(t *testing.T) {
 		if os.Getenv("SSH_AUTH_SOCK") == "" {
 			t.Skip()
 		}
-		SSHSetAgentSock(os.Getenv("SSH_AUTH_SOCK"), nil)
+		SSHSetAgentSock(os.Getenv("SSH_AUTH_SOCK"), nil, "")
 
 		testBuffer := randomBytes(64)
 		_, err := SSHSign(testBuffer, 0)
@@ -64,7 +64,7 @@ func TestSSH(t *testing.T) {
 		fixtureSSHKey, err := Asset("test_ssh_key")
 		So(err, ShouldBeNil)
 
-		SSHSetAgentSock("", fixtureSSHKey)
+		SSHSetAgentSock("", fixtureSSHKey, "")
 		Convey("A signature should still be generated without needing the agent.", func() {
 			buffer := randomBytes(64)
 			sig, err := SSHSign(buffer, 0)

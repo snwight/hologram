@@ -16,6 +16,8 @@ package agent
 
 import (
 	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"net"
 
@@ -26,24 +28,53 @@ import (
 
 var (
 	// Not sure if this needs a mutex around it. Probably not, because it only gets written once by one thing.
-	socketAddress  string
-	successfulKey  *agent.Key
-	providedSSHKey ssh.Signer
-	errNoKeys      = errors.New("No keys available in ssh-agent")
-	errSSHKey      = errors.New("Could not use the provided SSH key.")
+	socketAddress	string
+	providedSSHKey	ssh.Signer
+	errNoKeys =	errors.New("No keys available in ssh-agent")
+	errSSHKey = 	errors.New("Could not use the provided SSH key.")
 )
 
-func SSHSetAgentSock(socketAddressFromCli string, sshKeyFromCli []byte) {
+func ParseEncryptedPrivateKey(key []byte, passphrase string) (ssh.Signer, error) {
+	block, _ := pem.Decode(key)
+	key, err := x509.DecryptPEMBlock(block, []byte(passphrase))
+	if err != nil {
+		return nil, err
+	}
+	block.Headers = nil
+	block.Bytes = key
+	return ssh.ParsePrivateKey(pem.EncodeToMemory(block))
+}
+
+func SSHSetAgentSock(socketAddressFromCli string, sshKeyFromCli []byte, passPhrase string) {
+	// Update package-scope variable
+	// NB: One has major doubts about this logic.
 	socketAddress = socketAddressFromCli
 
-	if sshKeyFromCli != nil {
-		sshKey, keyErr := ssh.ParsePrivateKey(sshKeyFromCli)
-		if keyErr != nil {
-			log.Errorf("Could not parse SSH key given by the CLI.")
-		} else {
-			providedSSHKey = sshKey
+	// Don't allow nothing
+	if sshKeyFromCli == nil || socketAddressFromCli == "" {
+		return
+	}
+
+	var sshKey ssh.Signer
+	var err error
+
+	if passPhrase == "" {
+		sshKey, err = ssh.ParsePrivateKey(sshKeyFromCli)
+		if err != nil {
+			log.Errorf("Could not parse SSH key given by the CLI: %v.", err.Error())
+			return
+		}
+	} else {
+		sshKey, err = ParseEncryptedPrivateKey(sshKeyFromCli, passPhrase)
+		if err != nil {
+			log.Errorf("Could not parse encrypted SSH key given by the CLI: %v.", err.Error())
 		}
 	}
+
+	log.Debug("Successfully parsed SSH key given by the CLI.")
+
+	// Update package-scope variable
+	providedSSHKey = sshKey
 }
 
 // SSHSign signs the provided challenge using a key from the ssh-agent keyring. The key is chosen by enumerating all

@@ -26,6 +26,8 @@ import (
 
 	"github.com/AdRoll/hologram/agent"
 	"github.com/AdRoll/hologram/log"
+	"golang.org/x/crypto/ssh/terminal"
+	"fmt"
 )
 
 var (
@@ -33,11 +35,27 @@ var (
 	debugMode   = flag.Bool("debug", false, "Enable debug mode.")
 	configFile  = flag.String("conf", "/etc/hologram/agent.json", "Config file to load.")
 	httpPort    = flag.Int("port", 80, "Port for metadata service to listen on")
-	config      Config
+	prompt =    flag.Bool("prompt", false, "SSH encryption passphrase")
 )
+
+var (
+	config Config
+)
+
 
 func main() {
 	flag.Parse()
+	var err error
+	var passPhrase []byte
+
+	if *prompt {
+		fmt.Println("Enter private SSH passphrase: ")
+		passPhrase, err = terminal.ReadPassword(0)
+		if err != nil {
+			log.Errorf("Error reading SSH encryption passphrase", err.Error())
+			os.Exit(1)
+		}
+	}
 
 	if *debugMode {
 		log.DebugMode(true)
@@ -95,7 +113,7 @@ func main() {
 		client = agent.AccessKeyClient(credsManager, &config.AccountAliases)
 	}
 
-	agentServer := agent.NewCliHandler("/var/run/hologram.sock", client)
+	agentServer := agent.NewCliHandler("/var/run/hologram.sock", client, passPhrase)
 	if err := agentServer.Start(); err != nil {
 		log.Errorf("Could not start agentServer: %s", err.Error())
 		os.Exit(1)
